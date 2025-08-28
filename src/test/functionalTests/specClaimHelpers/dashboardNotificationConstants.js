@@ -170,7 +170,6 @@ module.exports = {
     };
   },
 
-
   //CIV-13035
   //Notice.AAA6.ClaimantIntent.RequestedCCJ.Claimant
   claimantNotificationCCJRequested: () => {
