@@ -8,18 +8,20 @@ import {CivilServiceClient} from 'client/civilServiceClient';
 import {Claim} from 'models/claim';
 import nock from 'nock';
 import config from 'config';
-import {getDraftClaim, updateDraftClaim, deleteDraftClaim} from 'modules/draft-store/draftStoreManagerService';
+import {generateRedisKey, saveDraftClaim} from 'modules/draft-store/draftStoreService';
+import {TTLCategory} from 'modules/draft-store/ttlConfig';
 import {ClaimDetails} from 'form/models/claim/details/claimDetails';
 import {Session} from 'express-session';
 import * as feePaymentServiceModule from 'services/features/feePayment/feePaymentService';
-import {CivilClaimResponse} from 'models/civilClaimResponse';
-import {DraftClaimManagerResult} from 'models/draft/draftClaim';
 
 const civilServiceUrl = config.get<string>('services.civilService.url');
-const draftId = 'test-draft-id';
+const redisKey = '111111jfkdljfd';
 
 jest.mock('../../../../../../main/modules/oidc');
-jest.mock('modules/draft-store/draftStoreManagerService');
+jest.mock('../../../../../../main/modules/draft-store/draftStoreService', () => ({
+  generateRedisKey: jest.fn(),
+  saveDraftClaim: jest.fn(),
+}));
 jest.mock('modules/utilityService', () => ({
   getClaimById: jest.fn(),
   getRedisStoreForSession: jest.fn(),
@@ -39,33 +41,20 @@ jest.mock('../../../../../../main/modules/draft-store/paymentSessionStoreService
   deletePaymentConfirmationUrl: jest.fn(),
 }));
 
-const mockGetDraftClaim = getDraftClaim as jest.Mock;
-const mockUpdateDraftClaim = updateDraftClaim as jest.Mock;
-const mockDeleteDraftClaim = deleteDraftClaim as jest.Mock;
-
-const createMockManagerResult = (claim: Claim): DraftClaimManagerResult => ({
-  claimResponse: {
-    id: draftId,
-    case_data: claim,
-  } as unknown as CivilClaimResponse,
-  rawResponse: {
-    draftId,
-    payload: claim,
-  } as unknown as DraftClaimManagerResult['rawResponse'],
-  createdAt: '2026-08-01T10:00:00.000Z',
-  updatedAt: '2026-08-01T11:00:00.000Z',
-  expiresAt: '2026-09-01T10:00:00.000Z',
-});
+const mockGenerateRedisKey = generateRedisKey as jest.Mock;
+const mockSaveDraftClaim = saveDraftClaim as jest.Mock;
 
 describe('on GET', () => {
   let app: express.Express;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGenerateRedisKey.mockReturnValue(redisKey);
+    mockSaveDraftClaim.mockResolvedValue(undefined);
     app = express();
     app.use(express.json());
     app.use((req, res, next) => {
-      req.session = {user: {id: 'jfkdljfd'}, draftId} as unknown as Session;
+      req.session = {user: {id: 'jfkdljfd'}} as unknown as Session;
       res.render = jest.fn((view, options) => res.status(200).send(options));
       next();
     });
@@ -160,7 +149,7 @@ describe('on GET', () => {
       });
   });
 
-  it('should clear paymentSyncError on the durable draft', async () => {
+  it('should clear paymentSyncError on the journey cache', async () => {
     const claim = new Claim();
     claim.paymentSyncError = true;
     claim.totalClaimAmount = 1000;
@@ -169,8 +158,6 @@ describe('on GET', () => {
     (getClaimBusinessProcess as jest.Mock).mockResolvedValueOnce({
       hasBusinessProcessFinished: () => false,
     });
-    mockGetDraftClaim.mockResolvedValue(createMockManagerResult(new Claim()));
-    mockUpdateDraftClaim.mockResolvedValue(undefined);
 
     await request(app)
       .get(CLAIM_FEE_BREAKUP.replace(':id', '111111'))
@@ -179,8 +166,13 @@ describe('on GET', () => {
         expect(res.body.paymentSyncError).toBe(true);
       });
 
-    expect(mockGetDraftClaim).toHaveBeenCalled();
-    expect(mockUpdateDraftClaim).toHaveBeenCalledWith(expect.anything(), expect.any(Claim), draftId);
+    expect(mockSaveDraftClaim).toHaveBeenCalledWith(
+      redisKey,
+      expect.any(Claim),
+      true,
+      'jfkdljfd',
+      TTLCategory.JOURNEY_CACHE,
+    );
   });
 
   it('should return 500 status code when error occurs', async () => {
@@ -206,20 +198,21 @@ describe('on POST', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGenerateRedisKey.mockReturnValue(redisKey);
+    mockSaveDraftClaim.mockResolvedValue(undefined);
     app = express();
     app.use(express.json());
     app.use((req, res, next) => {
-      req.session = {user: {id: 'jfkdljfd'}, draftId} as unknown as Session;
+      req.session = {user: {id: 'jfkdljfd'}} as unknown as Session;
       next();
     });
     app.use(claimFeeBreakDownController);
-    mockUpdateDraftClaim.mockResolvedValue(undefined);
   });
 
-  it('should handle the get call of fee summary details', async () => {
+  it('should handle the post call of fee summary details', async () => {
     const claim = new Claim();
     claim.claimDetails = new ClaimDetails();
-    mockGetDraftClaim.mockResolvedValue(createMockManagerResult(claim));
+    (getClaimById as jest.Mock).mockResolvedValue(claim);
     jest.spyOn(CivilServiceClient.prototype, 'getFeePaymentRedirectInformation').mockResolvedValueOnce({});
 
     await request(app)
@@ -228,14 +221,13 @@ describe('on POST', () => {
         expect(res.status).toBe(302);
       });
 
-    expect(mockUpdateDraftClaim).toHaveBeenCalled();
-    expect(mockDeleteDraftClaim).not.toHaveBeenCalled();
+    expect(mockSaveDraftClaim).toHaveBeenCalled();
   });
 
   it('should enable the warning text if payment request is failed', async () => {
     const claim = new Claim();
     claim.claimDetails = new ClaimDetails();
-    mockGetDraftClaim.mockResolvedValue(createMockManagerResult(claim));
+    (getClaimById as jest.Mock).mockResolvedValue(claim);
     jest.spyOn(CivilServiceClient.prototype, 'getFeePaymentRedirectInformation').mockRejectedValueOnce(new Error('something went wrong'));
 
     await request(app)
@@ -244,15 +236,14 @@ describe('on POST', () => {
         expect(res.header.location).toEqual(CLAIM_FEE_BREAKUP);
       });
 
-    expect(mockUpdateDraftClaim).toHaveBeenCalled();
-    expect(mockDeleteDraftClaim).not.toHaveBeenCalled();
+    expect(mockSaveDraftClaim).toHaveBeenCalled();
   });
 
   it('should redirect to confirmation url if already paid', async () => {
     const claim = new Claim();
     claim.claimDetails = new ClaimDetails();
     claim.claimDetails.claimFeePayment = {paymentReference: 'RC-1234-1234-1234-1234'};
-    mockGetDraftClaim.mockResolvedValue(createMockManagerResult(claim));
+    (getClaimById as jest.Mock).mockResolvedValue(claim);
     jest.spyOn(feePaymentServiceModule, 'getFeePaymentStatus').mockResolvedValueOnce({status: 'Success'});
 
     await request(app)
@@ -261,8 +252,13 @@ describe('on POST', () => {
         expect(res.header.location).toEqual(CLAIM_FEE_PAYMENT_CONFIRMATION_URL);
       });
 
-    expect(mockUpdateDraftClaim).toHaveBeenCalled();
-    expect(mockDeleteDraftClaim).not.toHaveBeenCalled();
+    expect(mockSaveDraftClaim).toHaveBeenCalledWith(
+      redisKey,
+      expect.any(Claim),
+      true,
+      'jfkdljfd',
+      TTLCategory.JOURNEY_CACHE,
+    );
   });
 
   it('should get new payment ref if previous payment failed', async () => {
@@ -270,7 +266,7 @@ describe('on POST', () => {
     const claim = new Claim();
     claim.claimDetails = new ClaimDetails();
     claim.claimDetails.claimFeePayment = {paymentReference: 'RC-1234-1234-1234-1234'};
-    mockGetDraftClaim.mockResolvedValue(createMockManagerResult(claim));
+    (getClaimById as jest.Mock).mockResolvedValue(claim);
     jest.spyOn(feePaymentServiceModule, 'getFeePaymentStatus').mockResolvedValueOnce({status: 'Failed'});
     jest.spyOn(CivilServiceClient.prototype, 'getFeePaymentRedirectInformation').mockResolvedValueOnce({nextUrl: paymentUrl});
 
@@ -280,15 +276,14 @@ describe('on POST', () => {
         expect(res.header.location).toEqual(paymentUrl);
       });
 
-    expect(mockUpdateDraftClaim).toHaveBeenCalled();
-    expect(mockDeleteDraftClaim).not.toHaveBeenCalled();
+    expect(mockSaveDraftClaim).toHaveBeenCalled();
   });
 
   it('should get new payment ref if previous payment failed - no payment data returned', async () => {
     const claim = new Claim();
     claim.claimDetails = new ClaimDetails();
     claim.claimDetails.claimFeePayment = {paymentReference: 'RC-1234-1234-1234-1234'};
-    mockGetDraftClaim.mockResolvedValue(createMockManagerResult(claim));
+    (getClaimById as jest.Mock).mockResolvedValue(claim);
     jest.spyOn(feePaymentServiceModule, 'getFeePaymentStatus').mockResolvedValueOnce({status: 'Failed'});
     jest.spyOn(CivilServiceClient.prototype, 'getFeePaymentRedirectInformation').mockResolvedValueOnce(undefined);
 
@@ -297,8 +292,6 @@ describe('on POST', () => {
         expect(res.status).toBe(302);
         expect(res.header.location).toEqual(CLAIM_FEE_BREAKUP);
       });
-
-    expect(mockDeleteDraftClaim).not.toHaveBeenCalled();
   });
 
   it('should redirect to payment if cannot get payment status', async () => {
@@ -306,7 +299,7 @@ describe('on POST', () => {
     jest.spyOn(CivilServiceClient.prototype, 'getFeePaymentRedirectInformation').mockResolvedValueOnce({nextUrl: paymentUrl});
     const claim = new Claim();
     claim.claimDetails = new ClaimDetails();
-    mockGetDraftClaim.mockResolvedValue(createMockManagerResult(claim));
+    (getClaimById as jest.Mock).mockResolvedValue(claim);
     jest.spyOn(feePaymentServiceModule, 'getFeePaymentStatus').mockRejectedValueOnce(new Error('something went wrong'));
 
     await request(app)
@@ -315,12 +308,36 @@ describe('on POST', () => {
         expect(res.header.location).toEqual(paymentUrl);
       });
 
-    expect(mockUpdateDraftClaim).toHaveBeenCalled();
-    expect(mockDeleteDraftClaim).not.toHaveBeenCalled();
+    expect(mockSaveDraftClaim).toHaveBeenCalled();
   });
 
-  it('should return 500 when no draft claim is found', async () => {
-    mockGetDraftClaim.mockResolvedValue(null);
+  it('should still pay when no durable draft exists', async () => {
+    const claim = new Claim();
+    (getClaimById as jest.Mock).mockResolvedValue(claim);
+    jest.spyOn(CivilServiceClient.prototype, 'getFeePaymentRedirectInformation').mockResolvedValueOnce({
+      nextUrl: 'paymentUrl',
+      paymentReference: 'RC-1234-1234-1234-1234',
+    });
+    jest.spyOn(feePaymentServiceModule, 'getFeePaymentStatus').mockResolvedValueOnce({status: 'Initiated'});
+
+    await request(app)
+      .post(CLAIM_FEE_BREAKUP)
+      .expect((res: request.Response) => {
+        expect(res.status).toBe(302);
+        expect(res.header.location).toEqual('paymentUrl');
+      });
+
+    expect(mockSaveDraftClaim).toHaveBeenCalledWith(
+      redisKey,
+      expect.any(Claim),
+      true,
+      'jfkdljfd',
+      TTLCategory.JOURNEY_CACHE,
+    );
+  });
+
+  it('should return 500 when loading the issued claim fails', async () => {
+    (getClaimById as jest.Mock).mockRejectedValue(new Error('Failed to get claim'));
 
     await request(app)
       .post(CLAIM_FEE_BREAKUP)
@@ -328,36 +345,20 @@ describe('on POST', () => {
         expect(res.status).toBe(500);
       });
 
-    expect(mockUpdateDraftClaim).not.toHaveBeenCalled();
-    expect(mockDeleteDraftClaim).not.toHaveBeenCalled();
+    expect(mockSaveDraftClaim).not.toHaveBeenCalled();
   });
 
-  it('should return 500 when loading the draft fails', async () => {
-    mockGetDraftClaim.mockRejectedValue(new Error('DB failure'));
-
-    await request(app)
-      .post(CLAIM_FEE_BREAKUP)
-      .expect((res: request.Response) => {
-        expect(res.status).toBe(500);
-      });
-
-    expect(mockUpdateDraftClaim).not.toHaveBeenCalled();
-    expect(mockDeleteDraftClaim).not.toHaveBeenCalled();
-  });
-
-  it('should return 500 when updating the draft fails', async () => {
+  it('should return 500 when saving payment state fails', async () => {
     const claim = new Claim();
     claim.claimDetails = new ClaimDetails();
     claim.claimDetails.claimFeePayment = {paymentReference: 'RC-1234-1234-1234-1234'};
-    mockGetDraftClaim.mockResolvedValue(createMockManagerResult(claim));
-    mockUpdateDraftClaim.mockRejectedValue(new Error('DB failure'));
+    (getClaimById as jest.Mock).mockResolvedValue(claim);
+    mockSaveDraftClaim.mockRejectedValue(new Error('Redis failure'));
 
     await request(app)
       .post(CLAIM_FEE_BREAKUP)
       .expect((res: request.Response) => {
         expect(res.status).toBe(500);
       });
-
-    expect(mockDeleteDraftClaim).not.toHaveBeenCalled();
   });
 });
