@@ -1231,11 +1231,11 @@ Evidence codes deduplicate repeated explanations; each row has one primary dispo
 
 | Disposition | Paths |
 | --- | ---: |
-| Adapted | 234 |
+| Adapted | 235 |
 | Already integrated | 105 |
 | Covered differently | 80 |
 | Defer | 8 |
-| Exclude | 243 |
+| Exclude | 242 |
 | Import/adapt | 49 |
 
 <details>
@@ -1359,7 +1359,7 @@ Evidence codes deduplicate repeated explanations; each row has one primary dispo
 | `src/main/common/form/validators/phoneUKValidator.ts` | Adapted | R005 |
 | `src/main/common/mappers/documentViewMapper.ts` | Exclude | R011 |
 | `src/main/common/models/caseProgression/uploadDocumentsSectionBuilder.ts` | Adapted | R009 |
-| `src/main/common/models/claim.ts` | Exclude | R012 |
+| `src/main/common/models/claim.ts` | Adapted | R012; R093 |
 | `src/main/common/models/generalApplication/applicationSummary.ts` | Adapted | R005 |
 | `src/main/common/utils/cryptoAes.ts` | Exclude | R013 |
 | `src/main/common/utils/dateUtils.ts` | Exclude | R011 |
@@ -1686,7 +1686,7 @@ Evidence codes deduplicate repeated explanations; each row has one primary dispo
 | `src/test/unit/common/models/caseProgression/uploadDocumentsSectionBuilder.test.ts` | Covered differently | R016 |
 | `src/test/unit/common/models/caseProgression/uploadDocumentsUserForm.test.ts` | Covered differently | R038 |
 | `src/test/unit/common/models/ccdResponse/ccdFixedCosts.test.ts` | Covered differently | R039 |
-| `src/test/unit/common/models/claim.test.ts` | Covered differently | R016 |
+| `src/test/unit/common/models/claim.test.ts` | Covered differently | R016; R093 |
 | `src/test/unit/common/models/dashboard/dashboard.test.ts` | Exclude | R040 |
 | `src/test/unit/common/models/dashboard/taskList/civilServiceDashboardTask.test.ts` | Exclude | R041 |
 | `src/test/unit/common/models/directionsQuestionnaire/experts/expertReportDetails/expertReportDetails.test.ts` | Defer | R042 |
@@ -2062,6 +2062,7 @@ Evidence codes deduplicate repeated explanations; each row has one primary dispo
 | R090 | Claim-fee redirect recovery: adapt the fork's missing-nextUrl fallback to all four current redirect paths, including master's invalid-reference early return. Missing, null, empty and whitespace-only URLs return to the fee page; existing provider URLs and successful-payment confirmation remain. Preserve payment-reference validation, draft ownership/loading/saving and retention boundaries. Extend the current isolated controller suite and claim-issue integration owner using real CCD payment translation and call-time saved-payload snapshots; do not import the fork's complete controller or HTTP unit suite. |
 | R091 | Missing or empty case-progression working upload draft: adapt the fork's rendering-only recovery at the check-and-send controller boundary on both GET and POST. Require current-role saved document references; parsed empty collections, unsaved rows and incomplete references recover before submission-body access. Redirect to existing document selection without an empty success summary, evidence event, task update, draft deletion or overwrite of either role's CCD documents. Direct-handler tests cover saved references in all 15 categories; integration follows the real dashboard refresh, CCD translator and empty multipart-form path in both languages/roles, with external boundaries mocked. |
 | R092 | Accessibility capture harness: serve actual built CSS/JS/public assets, require both bundles, supply the capture's i18n cookie and the installed official template's feature-detecting bootstrap, and own one loopback server with awaited startup/shutdown. Preserve fixture bytes outside that served bootstrap, existing Pa11y selection, rules and retries. A native browser regression checks actual GOV.UK radio initialization, conditional visibility, aria-expanded and saved values. HTTP integration checks resources, bootstrap/data preservation, missing bundles and cleanup. The earlier 33 header corrections remain; asset/font HTTP 200 and Pa11y passes alone did not prove enhanced components initialized. |
+| R093 | Claimant-response recovery: port the fork's optional access in getSuggestedPaymentIntentionOptionFromClaimant while retaining R012's exclusion of unrelated financial changes. Adapt the inherited refresh helper so an absent/null cached claimant response cannot erase the response translated from CCD; a present cached response remains authoritative, without merging. Preserve GA handling, per-user keys, JOURNEY_CACHE retention, delete/save ordering and independent failures. Model/utility regressions and the existing claimant-response integration owner cover copied confirmation links, cache expiry between guard hydration and controller refresh, subsequent full-admission task lists and in-progress response preservation in English/Welsh. The ordinary full-application cold-cache path is already hydrated by the outer claimant-intent guard; it is a positive control, not proof that every cold-cache request failed previously. |
 
 </details>
 
@@ -2934,3 +2935,68 @@ The full-unit observer recorded HTTP 401s in the existing defendant/small-claim 
 Initial setup/test-authoring failures remain separate: the first bootstrap comparison included ignored/action URLs and received 404; it now uses the actual existing Pa11y selection. The first native-browser launch bypassed the disposable hook through Puppeteer's default export, and the OS sandbox denied shared Chromium writes. Correcting both export paths selected the cached contained browser without relaxing containment. The intentional negative-control sources were restored before positive/full runs. Existing peer/deprecation, lint and Sass warnings remain recorded.
 
 This batch does not claim fresh Pact/server/container execution, authenticated saving, operational Redis/limiter/telemetry evidence, formal exclusion/phase attribution or separate QA. Earlier results remain historical. The user will commit and push these seven unstaged existing-file changes; no branch/ref/index/stack update, commit or push is part of this work. Protected context, pre-existing local notes and the source fork remain unchanged. Disposable installations, archives, caches, probes, reports and browser profiles are removed at handover.
+
+## PR11 claimant-response cache recovery amendment — 26 October 2026
+
+This amendment ports one useful fork-authored model hunk and corrects the inherited refresh assignment needed to preserve normal CCD translation. It supersedes the whole-file `claim.ts` exclusion where that exclusion previously applied R012's financial rationale to the unrelated optional getter. The admitted-amount and other financial hunks remain excluded.
+
+`getSuggestedPaymentIntentionOptionFromClaimant` now tolerates an absent/null claimant response as well as an absent payment intention. `refreshDraftStoreClaimFrom` retains the translated CCD response when the old cache has no response; an existing cached response, including an empty in-progress response, still wins wholesale. This does not merge answers or change general-application handling, draft ownership, JOURNEY_CACHE retention, delete/save ordering or error propagation.
+
+The full application has an additional boundary that the earlier direct guard/controller diagnostic did not model: `claimantIntentGuard` normally hydrates a cold cache before confirmation runs. Consequently, an ordinary copied confirmation link with an initially absent cache is a passing control even before this amendment. The integration regression also expires the cache at the backend-read boundary after that hydration, before the refresh reads Redis. That models TTL expiry between the existing reads and detects the destructive assignment. It exercises the real outer guard, confirmation guard/controller, CCD translator, serialization, templates and subsequent full-admission task providers. Authentication/session identity, backend I/O and Redis storage remain substituted; this is not authenticated backend acceptance.
+
+### Amendment inventory and reconciliation
+
+| Path | Change |
+| --- | --- |
+| `src/main/common/models/claim.ts` | Port only the optional claimant-response getter; retain the excluded financial behavior. |
+| `src/main/modules/utilityService.ts` | Preserve the translated response on a missing/null cached value. |
+| `src/test/unit/common/models/claim.test.ts` | Missing/null response, missing intention and exact saved payment-option cases. |
+| `src/test/unit/modules/utilityService.test.ts` | Independent per-case store baseline; missing/null cache shapes; preserved cached response/GA; exact keys, owner, retention and call-time writes; separate read/backend/delete/write failures. |
+| `src/integration-test/routes/claimantResponse/rejectAll.integration.test.ts` | Extend the existing route owner with bilingual cold-cache, between-read expiry and in-progress-response journeys; preserve its eight existing branching cases. |
+| `docs/pr9-presentation-review-notes.md` | Record R093, correct the mixed-hunk disposition and append current evidence without rewriting original PR9 history. |
+
+All six paths already exist. Five are newly changed relative to PR10; this document was already part of PR11. The prospective PR11 increment is now **164 paths**: 27 production, 74 unit suites, eight integration suites, 50 HTML captures, two documents, one Jest configuration and two accessibility-support paths. The 719-path fork inventory has unchanged membership and one corrected primary disposition: **235 Adapted, 105 Already integrated, 80 Covered differently, 49 Import/adapt, 242 Exclude and eight Defer**. Historical checkpoint counts above remain historical. The refresh helper is an integration adaptation outside the ancestor-to-fork inventory; no extra ledger path is invented.
+
+The withdrawn `braces` advisory allowance remains owned by PR2. The unavailable preview-notes link remains owned by PR10. Neither is corrected in this PR11 amendment, and the excluded local PR10 notes remain outside the deliverable. Formal phase attribution, accepted exclusions, operational/backend checks and separate QA remain distinct from this implementation correction.
+
+### Fresh amendment verification
+
+Verification used physical disposable source and a fresh immutable locked installation: Node **24.21.0**, Yarn **4.18.1**, Jest **29.7.0**, TypeScript **5.9.3**, GOV.UK Frontend **6.5.1**, class-validator **0.15.1**, Express **5.2.1** and ts-jest **29.4.14**. Installation hooks were disabled. The final installation and all application/test execution were offline, with independent OS write/network containment permitting localhost synthetic services. The network preloader was a separate path from the preview module tested by the repository.
+
+`J` below is `node --no-sparkplug node_modules/jest/bin/jest.js`. Existing discovery, coverage policy and retries were retained. An execution-only environment observer recorded initiating failures and retry events without changing assertions. Full unit and complete route runs were sequential.
+
+| Check / command | Workers | Result / exit |
+| --- | ---: | --- |
+| Scripts-disabled `yarn install --immutable --mode=skip-build`, final offline run | — | Passed / 0; four existing peer-dependency notices |
+| `J --runInBand --silent --runTestsByPath` — changed model/utility suites | 1 | 277 tests passed / 0 |
+| `J -c jest.functionaltest.config.js --runInBand --silent --runTestsByPath` — extended claimant-response owner | 1 | 14 tests passed / 0, including eight retained cases |
+| Old getter and refresh assignment in disposable source — same unit selection | 1 | 8 expected failures / 269 controls passed / 1 |
+| Old getter and refresh assignment — same route selection | 1 | 2 expected expiry failures / 12 controls passed / 1; ordinary cold-cache controls remained green |
+| `J --coverage --maxWorkers=4 --silent` — restored current source | 4 | **975 suites / 9,349 tests passed / 0**, no initiating failures or retries recorded |
+| `J -c jest.functionaltest.config.js --runInBand --silent` — complete route discovery | 1 | **25 suites / 333 tests passed / 0**, no initiating failures or retries recorded |
+| `tsc --noEmit --incremental false` — final source | — | Passed / 0 |
+| ESLint on all five changed TypeScript paths | — | Passed / 0; zero errors and 11 existing warnings |
+| Development Webpack build — final source | — | Passed / 0; seven existing Sass warnings |
+| `git diff --check`, inventory counts and original PR9 byte-prefix comparison | — | Passed |
+
+Coverage was 96.28% statements, 85.37% branches, 96.55% functions and 96.38% lines under the retained imported-file coverage configuration. No forced Jest exit was used. Existing ts-jest/Node deprecation notices remain. The clean full runs do not explain historical failures.
+
+Initial setup/test-authoring failures were resolved separately: Yarn archive workers rejected a V8 flag intended for Jest; the conversion install was rerun without that flag. The first typed fixture incorrectly placed the envelope id in CCD case_data, causing TypeScript/build errors; the final fixture maps it after translation as the client does. The first integration attempt lacked a signed-in session identity, so the six new assertions used the wrong cache key; the final harness supplies an isolated session boundary while retaining the actual guards and persistence code. These are not claimed as candidate production failures. Negative-control mutations were restored before final positive/full runs.
+
+External access was confined to **118 exact locked npm archives / 66,300,556 bytes** after checking copied caches. TLS, redirect rejection, package identity and unchanged Yarn checksums were enforced. Of these, 109 exact URL/size/SHA-256 triples match the full earlier registry.yarnpkg.com register above. The other nine exact destinations used in this run are recorded below. No GitHub/Jenkins, application/backend, advisory-audit, browser/runtime, container or Maven access occurred. No manifest, resolution or lock checksum changed.
+
+| Exact archive URL | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `https://registry.yarnpkg.com/@csstools/css-syntax-patches-for-csstree/-/css-syntax-patches-for-csstree-1.1.15.tgz` | 20006 | `47ec40a8a7bf32a5d22eb64477d2204c6e782b9ee5d4cfcfbc0c66c49036d07b` |
+| `https://registry.yarnpkg.com/@csstools/media-query-list-parser/-/media-query-list-parser-5.0.2.tgz` | 12142 | `34e37cc0007f2533b4b40c189a247097a1531f14105afac140c73f22eb9310f7` |
+| `https://registry.yarnpkg.com/@csstools/selector-specificity/-/selector-specificity-6.0.1.tgz` | 3515 | `49ad805e5071d72662b756cbcb6f01888842ccd33bd708f26fbd81f18d2e2475` |
+| `https://registry.yarnpkg.com/@pact-foundation/pact-core-darwin-arm64/-/pact-core-darwin-arm64-16.1.1.tgz` | 6251053 | `6dd1e68010992afe3b756f31655057822aeb3211d940d33c9166f76e2f8cd4b4` |
+| `https://registry.yarnpkg.com/@parcel/watcher-darwin-arm64/-/watcher-darwin-arm64-2.6.0.tgz` | 127800 | `4e668008969832fd9fa7d1fd250b9bf1f2420ec0f0637fc07324fe1b8f0e131a` |
+| `https://registry.yarnpkg.com/ignore/-/ignore-7.0.13.tgz` | 41934 | `006c31a51ed977e98f97fc6c01cc3f330b571e4981a39aa178c6b27d397460db` |
+| `https://registry.yarnpkg.com/ip-address/-/ip-address-10.7.4.tgz` | 85495 | `f9e1d0dd369c002f43770c6ee35942c8078e76d080a1e18e89113eef865f26ff` |
+| `https://registry.yarnpkg.com/stylelint/-/stylelint-17.16.0.tgz` | 207027 | `950b26ca89d53ea55cec1b8ca904ff6aa0d93007d360fe840dffdc174e148f66` |
+| `https://registry.yarnpkg.com/supports-hyperlinks/-/supports-hyperlinks-4.6.0.tgz` | 3675 | `1417a6719accf4ba6e41c945277adfabe0f18090a60161852b8d4619df9f3030` |
+
+This amendment does not claim a fresh production build, live dependency audit, Pact/server/container execution, browser/accessibility matrix, authenticated saving, operational Redis/limiter/telemetry evidence or separate QA. Those historical/external results remain distinct. The current PR2 audit maintenance and PR10 documentation-link correction remain outstanding on their owning branches.
+
+At handover, the six intended existing files remain unstaged and uncommitted. Branch, HEAD, refs, raw index, stack metadata, manifest/lockfile and protected context remain unchanged; the pre-existing PR10 notes remain excluded. Audit-owned disposable installations, caches, archives, probes and reports are removed after verification. No commit, push or remote modification is part of this work.
