@@ -1832,13 +1832,13 @@ Evidence codes deduplicate repeated explanations; each row has one primary dispo
 | `src/test/unit/routes/features/response/submitComfirmationController.test.ts` | Exclude | R062 |
 | `src/test/unit/routes/features/settlementAgreement/respondSettlementAgreementConfirmationController.test.ts` | Exclude | R062 |
 | `src/test/unit/routes/features/uiPreview/uiPreviewController.test.ts` | Covered differently | R058 |
-| `src/test/unit/routes/guards/GaTrackHistory.test.ts` | Exclude | R062 |
+| `src/test/unit/routes/guards/GaTrackHistory.test.ts` | Adapted | R094 |
 | `src/test/unit/routes/guards/claimantResponsecheckYourAnswersGuard.test.ts` | Exclude | R062 |
 | `src/test/unit/routes/guards/partAdmitGuard.test.ts` | Exclude | R062 |
 | `src/test/unit/routes/guards/partAdmitHowMuchHaveYouPaidGuard.test.ts` | Adapted | R062; R089 |
-| `src/test/unit/routes/guards/pcqGuard.test.ts` | Exclude | R062 |
-| `src/test/unit/routes/guards/pcqGuardClaim.test.ts` | Exclude | R062 |
-| `src/test/unit/routes/guards/redisDataFlushForDJGuard.test.ts` | Exclude | R062 |
+| `src/test/unit/routes/guards/pcqGuard.test.ts` | Adapted | R094 |
+| `src/test/unit/routes/guards/pcqGuardClaim.test.ts` | Adapted | R094 |
+| `src/test/unit/routes/guards/redisDataFlushForDJGuard.test.ts` | Adapted | R094 |
 | `src/test/unit/routes/guards/uploadRateLimitGuard.test.ts` | Exclude | R062 |
 | `src/test/unit/routes/homeController.test.ts` | Exclude | R062 |
 | `src/test/unit/routes/unauthorisedController.test.ts` | Exclude | R062 |
@@ -1883,7 +1883,7 @@ Evidence codes deduplicate repeated explanations; each row has one primary dispo
 | `src/test/unit/services/features/claimantResponse/defendantResponse/fullDisputeDefendantsResponseContent.test.ts` | Exclude | R063 |
 | `src/test/unit/services/features/claimantResponse/defendantResponse/partAdmissionAlreadyPaidDefendantsResponseContent.test.ts` | Exclude | R063 |
 | `src/test/unit/services/features/claimantResponse/defendantResponse/partAdmitNotPaidDefendantsResponseContent.test.ts` | Exclude | R063 |
-| `src/test/unit/services/features/claimantResponse/signSettlmentAgreementService.test.ts` | Exclude | R063 |
+| `src/test/unit/services/features/claimantResponse/signSettlmentAgreementService.test.ts` | Adapted | R095 |
 | `src/test/unit/services/features/common/claimTimelineService.test.ts` | Covered differently | R072 |
 | `src/test/unit/services/features/dashboard/claimSummary/latestUpdate/latestUpdateContent/claimDismissedHearingDueDateUploadContent.test.ts` | Exclude | R063 |
 | `src/test/unit/services/features/dashboard/claimSummary/latestUpdate/latestUpdateContent/evidenceUploadContent.test.ts` | Exclude | R063 |
@@ -2063,6 +2063,9 @@ Evidence codes deduplicate repeated explanations; each row has one primary dispo
 | R091 | Missing or empty case-progression working upload draft: adapt the fork's rendering-only recovery at the check-and-send controller boundary on both GET and POST. Require current-role saved document references; parsed empty collections, unsaved rows and incomplete references recover before submission-body access. Redirect to existing document selection without an empty success summary, evidence event, task update, draft deletion or overwrite of either role's CCD documents. Direct-handler tests cover saved references in all 15 categories; integration follows the real dashboard refresh, CCD translator and empty multipart-form path in both languages/roles, with external boundaries mocked. |
 | R092 | Accessibility capture harness: serve actual built CSS/JS/public assets, require both bundles, supply the capture's i18n cookie and the installed official template's feature-detecting bootstrap, and own one loopback server with awaited startup/shutdown. Preserve fixture bytes outside that served bootstrap, existing Pa11y selection, rules and retries. A native browser regression checks actual GOV.UK radio initialization, conditional visibility, aria-expanded and saved values. HTTP integration checks resources, bootstrap/data preservation, missing bundles and cleanup. The earlier 33 header corrections remain; asset/font HTTP 200 and Pa11y passes alone did not prove enhanced components initialized. |
 | R093 | Claimant-response recovery: port the fork's optional access in getSuggestedPaymentIntentionOptionFromClaimant while retaining R012's exclusion of unrelated financial changes. Adapt the inherited refresh helper so an absent/null cached claimant response cannot erase the response translated from CCD; a present cached response remains authoritative, without merging. Preserve GA handling, per-user keys, JOURNEY_CACHE retention, delete/save ordering and independent failures. Model/utility regressions and the existing claimant-response integration owner cover copied confirmation links, cache expiry between guard hydration and controller refresh, subsequent full-admission task lists and in-progress response preservation in English/Welsh. The ordinary full-application cold-cache path is already hydrated by the outer claimant-intent guard; it is a positive control, not proof that every cold-cache request failed previously. |
+
+| R094 | Selectively adapt the fork's direct GA history, claimant/respondent PCQ and DJ refresh guard assertions. These suites do not boot the application or issue HTTP requests, so R062 does not justify excluding them. Retain request-local cache protection; assert query-only history deduplication, actor/email/language/return URLs, current request-based persistence arguments, and independent failures. Extend the existing redisDataFlushForDJGuardTest.ts rather than creating a duplicate file with the fork's filename. PCQ wire-format compatibility remains a separate unresolved boundary. |
+| R095 | Mixed test-file adaptation: import the settlement-deadline behavior into a direct service suite using real Claim/ClaimantResponse choices. Assert no request for a non-settlement choice, exact seven-day versus five-day arguments, the local 16:00 cutoff including equality/month rollover, request identity, returned deadline and call counts. Fixed clocks are restored after every case. R063 still applies to the fork's separate translation-key/existence checks; they are not represented as equivalent coverage. |
 
 </details>
 
@@ -3000,3 +3003,75 @@ External access was confined to **118 exact locked npm archives / 66,300,556 byt
 This amendment does not claim a fresh production build, live dependency audit, Pact/server/container execution, browser/accessibility matrix, authenticated saving, operational Redis/limiter/telemetry evidence or separate QA. Those historical/external results remain distinct. The current PR2 audit maintenance and PR10 documentation-link correction remain outstanding on their owning branches.
 
 At handover, the six intended existing files remain unstaged and uncommitted. Branch, HEAD, refs, raw index, stack metadata, manifest/lockfile and protected context remain unchanged; the pre-existing PR10 notes remain excluded. Audit-owned disposable installations, caches, archives, probes and reports are removed after verification. No commit, push or remote modification is part of this work.
+
+
+## 27 October 2026 — current delivery allocation and final test reconciliation
+
+This section records the current local implementation after redistribution and restacking. It supersedes earlier prospective path counts, ownership assignments and outstanding-work statements only where identified below. Dated execution results and earlier unstaged handovers remain historical evidence, not current status or fresh test results.
+
+### Current stack ownership
+
+The eleven branches have been rebased with `gh stack rebase` onto fetched master `daf2108ca9c8d4b497f5b8a949a7e2b40d37e8c3`. Each stage inherits its immediate predecessor. The PR2 manifest/lock conflict retains master's Playwright 1.64.1 and WebdriverIO 10.1.0, converted to exact pins with their corresponding lock dependencies/checksums. This does not authorize unrelated dependency upgrades or weaken the audit policy.
+
+| Owner | Current implementation and necessary stage protection |
+| --- | --- |
+| PR1 | Selected standalone tests, bank-account converter predicate, master encryption/payment-reference protections, awaited assignment and independent claimant-payment/GA fixture baselines. |
+| PR2 | Dependency/tooling reconciliation, real lint/audit policy, removal of the withdrawn braces allowance, capture server and its integration support, official bootstrap/language prerequisites, header compatibility and capture assertions. The requesting-reason capture now has the exact translated production title, including title order; its narrow regression is present here. |
+| PR3 | Replacement court-order/evidence Add another controls, server/browser limits, associations, saved values, errors and focus protection. |
+| PR4 | Task-list adaptation, destination/status/order preservation, task headings and their capture regression. |
+| PR5 | Postcode formatting, cancellation/stale-response protection, independent roots and native form contracts. |
+| PR6 | Shared controls, explicit heading options, date errors, four-week legend, respondent-agreement title, accept-offer numeric values and necessary render/capture support. |
+| PR7 | Expanded repeated rows/calculations, comment-only timeline recovery, date-error/false-class/heading corrections and actual-template protection. |
+| PR8 | Native upload actions, optional-category and whole-draft recovery, query removal/date-error support, multipart regressions and retirement of MOJ/jQuery after replacement. Pending browser files remain explicitly limited. |
+| PR9 | Remaining presentation, saved response selection, numeric defaults, document rendering and broader production-template/capture comparisons. Its duplicate requesting-reason title correction has been removed during restacking; the broader regression remains. |
+| PR10 | Restricted preview, fixture/network isolation, catalogue prerequisites, temporary-directory/process ownership, child output and cleanup. The retained guide states limitations directly; its broken excluded-notes link is resolved. |
+| PR11 | Selective remaining fork tests, inherited partial-admission/GA/payment/claimant-response recovery, full-admission Change links, instalment-date reconstruction, unit/route UTC configuration and final delivery accounting. The guard/deadline assertions below protect inherited behavior; they do not supply a missing prerequisite or repair an implementation introduced by PR1–PR10. |
+
+The earlier claim that the PR2 braces allowance and PR10 guide link remain outstanding is superseded: both corrections are in their owning branches. PR11 does not duplicate their runtime or tooling changes. The excluded local PR10 notes and absent decision log are not deliverables and have not been added to Git.
+
+### Remaining useful fork assertions now integrated
+
+R094 replaces the inapplicable R062 whole-file exclusions for four direct guard suites. The GA history suite protects first-visit query preservation, query-only deduplication, different-path transitions and forwarding failures. The existing two PCQ suites retain both master cache-reuse cases and add exact actor, IDAM/respondent email, query-over-cookie language, return URL, request-based save and redirect assertions. Shutter, unhealthy, ineligible and independent read/health/save failures have fresh per-case baselines. The existing DJ suite now distinguishes initial read, refresh and final-save failures and rejects an extra successful continuation or inappropriate save.
+
+R095 replaces the whole-file R063 exclusion for the settlement service's useful deadline assertions. The new suite invokes the real deadline service and real Claim/ClaimantResponse decisions. It checks no API call when settlement is not selected, seven days for ordinary settlement, and five days for an accepted immediate plan with precise before/at/after-16:00 start dates. The cutoff cases include month rollover and preserve the original request identity. Content-key smoke cases remain excluded; no production deadline change or PCQ protocol change is implied.
+
+The ancestor-to-exact-fork ledger retains the same **719 unique paths**. Its current primary counts are **240 Adapted, 105 Already integrated, 80 Covered differently, 49 Import/adapt, 237 Exclude and eight Defer**. These five corrected dispositions describe the selected behavioral assertions, not wholesale source copying or exhaustive assertion parity. Historical totals above describe their dated candidates.
+
+### Full-admission and date-reconstruction amendment
+
+The amendment originally committed as `2ef7ea22b7bca76f12561efeb4ce42295781a9f3` is retained as `55f7594f4d0428549bb5568e3ea00fbcdb7dd94f` after this rebase. Full-admission payment-option Change links lead to the claimant payment-choice editor, and instalment-detail links lead to the claimant instalments editor. Legitimate partial-admission settlement links remain. Tests follow the rendered links and assert their editor destinations.
+
+Saved instalment reconstruction passes through real CCD translation and JSON cache serialization. Absent, null or invalid saved dates become blank date fields without resetting the saved amount/frequency. Valid dates and invalid/partial POST redisplay remain distinct and preserved. This is a bounded recovery correction, not authorization for broad financial fallbacks.
+
+Both Jest unit and route-integration configurations set UTC for repeatable date assertions. The route configuration amendment originally at `20d591e1f6822fcca29d6b110e759ddbf1828d84` is retained at `d97c2b32deaef8f427b4fb5296046c6d388eec9d` after this rebase. Production timezone configuration is unchanged; a test timezone is not evidence of a deployment timezone contract.
+
+### Delivered scope and remaining acceptance
+
+The series delivers the component/template/native-control migrations, shared helpers, development tooling, selected regression coverage, bounded integration recovery and restricted local preview described above. Remaining persistence redesign, route/model decomposition, Redis fixture extraction, translation namespaces, multi-party support, bulk claims and DAST retain their existing ticket ownership. The dormant expert-report editor remains inactive; related row models still have active CCD translation consumers.
+
+The eight recorded coverage boundaries remain explicit and separate from the newly integrated guard/deadline assertions. In particular, direct PCQ guard argument tests do not resolve the independent PCQ wire-format oracle. No new feature or automatic additional PR is required merely by those recorded boundaries.
+
+For DTSCCI-5145 and DTSCCI-4187, the concrete delivered work above and the deferred scope remain recorded. The available governing material does not establish their full phase-specific acceptance contracts; authoritative owner attribution and phase closure are not claimed. Required executed checks, approved delivery, applicable operational/backend evidence and separate QA-person evidence remain distinct from coding changes. The Jenkins missing-CSS investigation is outside this amendment.
+
+### Verification for this amendment
+
+Executed with Node 24.21.0 and Yarn 4.18.1:
+
+| Check | Result and limit |
+| --- | --- |
+| PR2 narrow title regression | Failed against the stale capture, then passed with the corrected production title. |
+| PR2 complete capture-header suite, after rebase and dependency installation | Five tests passed on PR2 itself. |
+| PR2 and combined immutable installation | Passed with `--mode=skip-build`; dependency lifecycle scripts were not run. Existing peer-dependency notices remain. |
+| Dependency pin/checksum policy | Passed. All 36 package records newly introduced by the two upstream dependency commits retain their upstream version, dependency and checksum payloads. |
+| Five PR11 guard/deadline suites | 46 tests passed; they also passed in the complete unit runs below. |
+| TypeScript, `tsc --noEmit --incremental false` | Passed after correcting test-fixture typings. |
+| ESLint on the six changed/new TypeScript test files across PR2/PR11 | No errors; two pre-existing explicit-any warnings in the DJ suite. |
+| Development Webpack build | Passed with seven Sass warnings. |
+| Complete unit discovery, first run with local sockets available | 981 suites / 9,273 tests passed; one request-more-time POST assertion received 500 instead of 302. |
+| Request-more-time suite in isolation | All ten tests passed. This does not explain the full-run failure. |
+| Complete unit diagnostic repeat with retry errors recorded | 982 suites / 9,274 tests passed. The unchanged date-paid error-path test retried once after receiving 401 instead of 500. This is not a claim of a clean first-attempt full run. |
+| Complete route integration discovery | 26 suites / 361 tests passed using local mocked boundaries. |
+| Restack preservation | Every stage's other committed paths match its starting checkpoint; only upstream manifest/lock changes and the PR2 capture/test correction differ before this PR11 amendment. Production source is unchanged. |
+| Inventory and whitespace | 719 unique ledger paths, corrected counts above, and no whitespace errors. |
+
+The first sandboxed whole-unit attempt was stopped because Supertest could not obtain local server sockets; it is not counted as a completed run. No further production or test changes were guessed from the unrelated full-run failure/retry. Their causes remain unestablished. Browser/Pa11y, hosted pipelines, live dependency advisories, real backend/Redis/telemetry and separate QA acceptance were not exercised by this amendment. The completed local mocked route tests are not substitutes for that evidence.
